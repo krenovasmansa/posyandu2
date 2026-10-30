@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portal Posyandu</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: auto; padding: 16px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+    th { background: #e8f5e9; }
+    input, button { padding: 8px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Portal Posyandu</h1>
+
+  <h2>Jadwal Kegiatan</h2>
+  <div id="jadwal">Memuat...</div>
+
+  <h2>Riwayat Anak</h2>
+  <input id="kode" placeholder="Masukkan kode, mis. A001">
+  <button onclick="cariRiwayat()">Cari</button>
+  <div id="riwayat"></div>
+
+  <script>
+    // GANTI dengan URL /exec milik kamu
+    const API = https://script.google.com/macros/s/AKfycbwoqBhW51GsvsGLJNS9CZIuypauO8oKay_vikee77hhuMwjwaZLAlLvOs9wfrgsN4tr/exec;
+
+    // Membuat tabel dari data (memakai textContent agar aman)
+    function buatTabel(data, kolom) {
+      const tabel = document.createElement('table');
+      const baris1 = document.createElement('tr');
+      kolom.forEach(k => {
+        const th = document.createElement('th');
+        th.textContent = k;
+        baris1.appendChild(th);
+      });
+      tabel.appendChild(baris1);
+      data.forEach(d => {
+        const tr = document.createElement('tr');
+        kolom.forEach(k => {
+          const td = document.createElement('td');
+          td.textContent = d[k];
+          tr.appendChild(td);
+        });
+        tabel.appendChild(tr);
+      });
+      return tabel;
+    }
+
+    // Mengambil dan menampilkan jadwal
+    async function muatJadwal() {
+      const el = document.getElementById('jadwal');
+      try {
+        const res = await fetch(API + '?aksi=jadwal');
+        const json = await res.json();
+        el.textContent = '';
+        el.appendChild(buatTabel(json.data, ['tanggal', 'jam', 'lokasi', 'kegiatan']));
+      } catch (err) {
+        el.textContent = 'Data gagal dimuat. Coba lagi nanti.';
+      }
+    }
+
+    // Mencari riwayat berdasarkan kode
+    async function cariRiwayat() {
+      const el = document.getElementById('riwayat');
+      const kode = document.getElementById('kode').value.trim();
+      if (!kode) { el.textContent = 'Isi kode dulu.'; return; }
+      el.textContent = 'Memuat...';
+      try {
+        const res = await fetch(API + '?aksi=riwayat&kode=' + encodeURIComponent(kode));
+        const json = await res.json();
+        el.textContent = '';
+        if (json.data.length === 0) {
+          el.textContent = 'Kode tidak ditemukan.';
+        } else {
+          el.appendChild(buatTabel(json.data,
+            ['tanggal', 'berat_kg', 'tinggi_cm', 'imunisasi', 'catatan']));
+        }
+      } catch (err) {
+        el.textContent = 'Data gagal dimuat. Coba lagi nanti.';
+      }
+    }
+
+    muatJadwal();
+  </script>
+</body>
+</html>
